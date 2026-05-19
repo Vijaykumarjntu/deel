@@ -1,0 +1,65 @@
+{% extends 'core/base.html' %}
+{% block title %}Dashboard - MiniDeel{% endblock %}
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-4">Welcome, {{ company.name }}</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-blue-50 p-4 rounded">
+            <p class="text-gray-600">Stripe Status</p>
+            <p class="font-bold">
+                {% if company.stripe_verified %}
+                    ✅ Verified
+                {% else %}
+                    ⚠️ Not Connected
+                {% endif %}
+            </p>
+        </div>
+        <div class="bg-green-50 p-4 rounded">
+            <p class="text-gray-600">Contractors</p>
+            <p class="font-bold text-2xl">{{ contractors.count }}</p>
+        </div>
+    </div>
+    
+    <div class="mb-6">
+        <a href="{% url 'add_contractor' %}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+            + Add Contractor
+        </a>
+        <a href="{% url 'contractor_list' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2">
+            View All Contractors
+        </a>
+    </div>
+    
+    {% if contractors %}
+        <h2 class="text-xl font-bold mb-3">Recent Contractors</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2 text-left">Name</th>
+                        <th class="p-2 text-left">Country</th>
+                        <th class="p-2 text-left">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contractor in contractors|slice:":5" %}
+                    <tr class="border-b">
+                        <td class="p-2">{{ contractor.full_name }}</td>
+                        <td class="p-2">{{ contractor.get_country_display }}</td>
+                        <td class="p-2">
+                            {% if contractor.is_active %}
+                                <span class="text-green-600">Active</span>
+                            {% else %}
+                                <span class="text-red-600">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-500">No contractors yet. Click "Add Contractor" to get started.</p>
+    {% endif %}
+</div>
+{% endblock %}

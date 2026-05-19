@@ -1,0 +1,10 @@
+{% extends 'core/base.html' %}
+{% block title %}Home - MiniDeel{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>MiniDeel</h1>
+    <p>Global payroll and contractor management</p>
+    <a href="{% url 'signup' %}">Sign Up</a>
+    <a href="{% url 'login' %}">Login</a>
+</div>
+{% endblock %}

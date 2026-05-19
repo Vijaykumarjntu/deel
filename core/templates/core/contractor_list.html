@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% block title %}Contractors - MiniDeel{% endblock %}
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-4">Your Contractors</h1>
+    
+    <div class="mb-4">
+        <a href="{% url 'add_contractor' %}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+            + Add New Contractor
+        </a>
+        <a href="{% url 'dashboard' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-2">
+            ← Back to Dashboard
+        </a>
+    </div>
+    
+    {% if contractors %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2 text-left">Name</th>
+                        <th class="p-2 text-left">Email</th>
+                        <th class="p-2 text-left">Country</th>
+                        <th class="p-2 text-left">Tax ID</th>
+                        <th class="p-2 text-left">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contractor in contractors %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2">{{ contractor.full_name }}</td>
+                        <td class="p-2">{{ contractor.user.email }}</td>
+                        <td class="p-2">{{ contractor.get_country_display }}</td>
+                        <td class="p-2">{{ contractor.tax_id }}</td>
+                        <td class="p-2">
+                            {% if contractor.is_active %}
+                                <span class="text-green-600">Active</span>
+                            {% else %}
+                                <span class="text-red-600">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-500">No contractors yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
