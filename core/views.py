@@ -13,18 +13,44 @@ from django.views.decorators.csrf import csrf_exempt
 def home(request):
     return render(request, 'core/home.html')
 
+
 def signup(request):
-    print("signup working")
     if request.method == 'POST':
         form = CompanySignupForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            # Get data
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password1']
+            company_name = form.cleaned_data['company_name']
+            website = form.cleaned_data.get('website', '')
+            
+            # Create user manually (MORE RELIABLE)
+            from .models import User
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                role='company'
+            )
+            
+            # Create company
+            Company.objects.create(
+                user=user,
+                name=company_name,
+                website=website
+            )
+            
+            # Log them in
             login(request, user)
-            messages.success(request, 'Company registered successfully!')
+            messages.success(request, f'Welcome {company_name}!')
             return redirect('dashboard')
+        else:
+            messages.error(request, 'Please fix the errors below')
     else:
         form = CompanySignupForm()
+    
     return render(request, 'core/signup.html', {'form': form})
+
 
 @csrf_exempt
 def login_view(request):
@@ -47,10 +73,34 @@ def logout_view(request):
     logout(request)
     return redirect('home')
 
+
+# core/views.py
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
 # @login_required
+# def dashboard(request):
+#     # Hardcoded data for now
+#     company = {
+#         'name': request.user.email,  # Use email as company name
+#         'stripe_verified': False,
+#     }
+    
+#     contractors = [
+#         {'full_name': 'John Contractor', 'country': 'India', 'is_active': True},
+#         {'full_name': 'Jane Worker', 'country': 'Brazil', 'is_active': True},
+#     ]
+    
+#     return render(request, 'core/company_dashboard.html', {
+#         'company': company,
+#         'contractors': contractors,
+#     })
+
+
+@login_required
 def dashboard(request):
     
-    if  1==1 or request.user.role:
+    if  request.user.role:
         company = request.user.company
         contractors = company.contractors.all()
         return render(request, 'core/company_dashboard.html', {

@@ -13,14 +13,14 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='company')
     groups = models.ManyToManyField(
         'auth.Group',
-        related_name='core_users',  # Changed from default
+        related_name='custom_user_set',  # Changed from default
         blank=True,
         verbose_name='groups',
         help_text='The groups this user belongs to.',
     )
     user_permissions = models.ManyToManyField(
         'auth.Permission',
-        related_name='core_users',  # Changed from default
+        related_name='custom_user_permissions_set',  # Changed from default
         blank=True,
         verbose_name='user permissions',
         help_text='Specific permissions for this user.',
