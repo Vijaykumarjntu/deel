@@ -53,7 +53,7 @@ class Payout(models.Model):
         ('retrying', 'Retrying'),
     )
     
-    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='payouts')
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='payouts',null=True,blank=True)
     contractor = models.ForeignKey('core.Contractor', on_delete=models.CASCADE, related_name='payouts')
     company = models.ForeignKey('core.Company', on_delete=models.CASCADE, related_name='payouts')
     

@@ -64,90 +64,118 @@ def stripe_refresh(request):
 
 
 # payments/views.py
-# import stripe
-# import json
-# from django.conf import settings
-# from django.http import HttpResponse
-# from django.views.decorators.csrf import csrf_exempt
-# from django.views.decorators.http import require_http_methods
-# from .models import WebhookEvent
+import stripe
+from django.conf import settings
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
+from core.models import Contractor
+from .models import Payout
 
-# stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
-# @csrf_exempt
-# @require_http_methods(["POST"])
-# def stripe_webhook(request):
-#     """Handle Stripe webhook events"""
-#     payload = request.body
-#     sig_header = request.headers.get('Stripe-Signature')
+@login_required
+def create_checkout_session(request, contractor_id):
+    """Create Stripe Checkout session to pay a contractor"""
     
-#     print(f"Webhook received. Signature present: {bool(sig_header)}")
-#     print("this is the key")
-#     print(stripe.api_key)
-#     # Verify webhook signature
-#     try:
-#         event = stripe.Webhook.construct_event(
-#             payload, 
-#             sig_header, 
-#             settings.STRIPE_WEBHOOK_SECRET
-#         )
-#     except ValueError as e:
-#         print(f"Invalid payload: {e}")
-#         return HttpResponse("Invalid payload", status=400)
-#     except stripe.error.SignatureVerificationError as e:
-#         print(f"Invalid signature: {e}")
-#         return HttpResponse("Invalid signature", status=400)
+    if request.user.role != 'company':
+        messages.error(request, 'Only companies can make payments')
+        return redirect('dashboard')
     
-#     event_id = event['id']
-#     event_type = event['type']
+    try:
+        contractor = Contractor.objects.get(id=contractor_id, company=request.user.company)
+    except Contractor.DoesNotExist:
+        messages.error(request, 'Contractor not found')
+        return redirect('contractor_list')
     
-#     print(f"Processing webhook: {event_type} - {event_id}")
-    
-#     # Idempotency check - prevent duplicate processing
-#     webhook_event, created = WebhookEvent.objects.get_or_create(
-#         event_id=event_id,
-#         defaults={
-#             'event_type': event_type,
-#             'processed': False
-#         }
-#     )
-    
-#     if not created and webhook_event.processed:
-#         print(f"Event {event_id} already processed, skipping")
-#         return HttpResponse("Already processed", status=200)
-    
-#     # Handle different event types
-#     if event_type == 'payment_intent.succeeded':
-#         payment_intent = event['data']['object']
-#         print(f"✅ Payment succeeded: {payment_intent['id']}")
-#         print(f"   Amount: {payment_intent['amount']} {payment_intent['currency']}")
-#         # TODO: Trigger payout to contractor
+    if request.method == 'POST':
+        amount = request.POST.get('amount')
         
-#     elif event_type == 'payment_intent.created':
-#         payment_intent = event['data']['object']
-#         print(f"📝 Payment created: {payment_intent['id']}")
-        
-#     elif event_type == 'payment_intent.payment_failed':
-#         payment_intent = event['data']['object']
-#         print(f"❌ Payment failed: {payment_intent['id']}")
-#         print(f"   Error: {payment_intent.get('last_payment_error', {}).get('message')}")
-        
-#     elif event_type == 'account.updated':
-#         account = event['data']['object']
-#         print(f"🏦 Account updated: {account['id']}")
-#         print(f"   Charges enabled: {account.get('charges_enabled')}")
-#         print(f"   Payouts enabled: {account.get('payouts_enabled')}")
-        
-#     else:
-#         print(f"⚠️ Unhandled event type: {event_type}")
+        try:
+            # Convert to cents for Stripe
+            amount_cents = int(float(amount) * 100)
+            
+            # Create Checkout Session
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': f'Payment to {contractor.full_name}',
+                            'description': f'Contractor payment for {contractor.company.name}',
+                        },
+                        'unit_amount': amount_cents,
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=request.build_absolute_uri(reverse('payment_success')) + f'?session_id={{CHECKOUT_SESSION_ID}}&contractor_id={contractor_id}',
+                cancel_url=request.build_absolute_uri(reverse('payment_cancel')),
+                metadata={
+                    'contractor_id': contractor_id,
+                    'company_id': request.user.company.id,
+                    'amount_usd': amount,
+                }
+            )
+            
+            # Save payout record
+            Payout.objects.create(
+                contractor=contractor,
+                company=request.user.company,
+                amount_usd=amount,
+                stripe_payment_intent_id=checkout_session.id,
+                status='pending'
+            )
+            
+            return redirect(checkout_session.url, code=303)
+            
+        except stripe.error.StripeError as e:
+            messages.error(request, f'Payment error: {str(e)}')
+            return redirect('contractor_list')
     
-#     # Mark as processed
-#     webhook_event.processed = True
-#     webhook_event.save()
-    
-#     return HttpResponse("OK", status=200)
+    return render(request, 'payments/create_checkout.html', {
+        'contractor': contractor,
+    })
 
-    # payments/views.py
+# payments/views.py
+from .models import Payout, WebhookEvent
+
+@login_required
+def payment_success(request):
+    """Handle successful payment redirect"""
+    session_id = request.GET.get('session_id')
+    contractor_id = request.GET.get('contractor_id')
+    
+    try:
+        # Retrieve checkout session from Stripe
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        # Update payout record
+        payout = Payout.objects.filter(stripe_payment_intent_id=session_id).first()
+        if payout:
+            payout.status = 'processing'
+            payout.save()
+        
+        messages.success(request, f'Payment of ${session.amount_total/100} USD successful!')
+        
+        # Trigger mock payout (will replace with real later)
+        from .tasks import process_mock_payout
+        process_mock_payout(payout.id)
+        
+    except Exception as e:
+        messages.error(request, f'Error processing payment: {str(e)}')
+    
+    return redirect('contractor_list')
+
+@login_required
+def payment_cancel(request):
+    """Handle cancelled payment"""
+    messages.warning(request, 'Payment was cancelled')
+    return redirect('contractor_list')
+
+    
 import stripe
 import json
 import logging
