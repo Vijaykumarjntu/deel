@@ -167,3 +167,5 @@ def contractor_list(request):
     
     contractors = request.user.company.contractors.all()
     return render(request, 'core/contractor_list.html', {'contractors': contractors})
+
+

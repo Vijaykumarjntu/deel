@@ -39,9 +39,13 @@ class Contract(models.Model):
     def __str__(self):
         return f"{self.title} - {self.contractor.full_name}"
     
+    from decimal import Decimal
     @property
     def monthly_amount_usd(self):
-        return self.hourly_rate_usd * self.monthly_hours
+        
+        rate = Decimal(str(self.hourly_rate_usd))
+        hours = Decimal(str(self.monthly_hours))
+        return rate * hours
 
 class Payout(models.Model):
     """Record of payments to contractors"""
