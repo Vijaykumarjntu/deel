@@ -12,12 +12,23 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import environ
+import os
 
 env = environ.Env()
+
+environ.Env.read_env()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# MANUALLY LOAD .env FILE
+with open(BASE_DIR / '.env', 'r') as f:
+    for line in f:
+        line = line.strip()
+        if line and not line.startswith('#'):
+            key, value = line.split('=', 1)
+            os.environ[key] = value
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/

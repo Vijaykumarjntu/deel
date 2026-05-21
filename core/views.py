@@ -97,24 +97,52 @@ from django.shortcuts import render
 #     })
 
 
+# @login_required
+# def dashboard(request):
+    
+#     if  request.user.role:
+#         company = request.user.company
+#         contractors = company.contractors.all()
+#         return render(request, 'core/company_dashboard.html', {
+#             'company': company,
+#             'contractors': contractors,
+#         })
+#     elif request.user.role == 'contractor':
+#         contractor = request.user.contractor
+#         contracts = contractor.contracts.all()
+#         return render(request, 'core/contractor_dashboard.html', {
+#             'contractor': contractor,
+#             'contracts': contracts,
+#         })
+#     return redirect('home')
+
+
+# # core/views.py
+# from django.contrib.auth.decorators import login_required
+# from django.shortcuts import render, redirect
+
 @login_required
 def dashboard(request):
-    
-    if  request.user.role:
+    # Check if user is a company
+    if hasattr(request.user, 'company'):
         company = request.user.company
         contractors = company.contractors.all()
         return render(request, 'core/company_dashboard.html', {
             'company': company,
             'contractors': contractors,
         })
-    elif request.user.role == 'contractor':
+    
+    # Check if user is a contractor
+    elif hasattr(request.user, 'contractor'):
         contractor = request.user.contractor
         contracts = contractor.contracts.all()
         return render(request, 'core/contractor_dashboard.html', {
             'contractor': contractor,
             'contracts': contracts,
         })
-    return redirect('home')
+    
+    # Fallback
+    return redirect('login')
 
 @login_required
 def add_contractor(request):

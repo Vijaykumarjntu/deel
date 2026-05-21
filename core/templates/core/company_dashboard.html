@@ -61,5 +61,6 @@
     {% else %}
         <p class="text-gray-500">No contractors yet. Click "Add Contractor" to get started.</p>
     {% endif %}
+    <a href="{% url 'stripe_connect' %}">Connect Stripe</a>
 </div>
 {% endblock %}
