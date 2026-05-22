@@ -160,6 +160,15 @@ def payment_success(request):
             payout.status = 'processing'
             payout.save()
         
+        # 🔥 SEND EMAILS
+        try:
+            send_payment_received_email(payout)  # To contractor
+            send_payment_sent_email(payout)      # To company
+            messages.info(request, 'Email notifications sent')
+        except Exception as e:
+            print(f"Email failed: {e}")
+
+            
         messages.success(request, f'Payment of ${session.amount_total/100} USD successful!')
         
         # Trigger mock payout (will replace with real later)
@@ -452,6 +461,13 @@ def send_contract(request, contract_id):
     contract.status = 'sent'
     contract.sent_at = timezone.now()
     contract.save()
+
+     # 🔥 SEND EMAIL TO CONTRACTOR
+    try:
+        send_contract_sent_email(contract)
+        messages.info(request, f'Email notification sent to {contract.contractor.user.email}')
+    except Exception as e:
+        print(f"Email failed: {e}")
     
     messages.success(request, f'Contract sent to {contract.contractor.full_name}')
     return redirect('contract_detail', contract_id=contract.id)
@@ -475,6 +491,13 @@ def sign_contract(request, contract_id):
         contract.signed_at = timezone.now()
         contract.signed_ip = get_client_ip(request)
         contract.save()
+
+        # 🔥 SEND EMAIL TO COMPANY
+        try:
+            send_contract_signed_email(contract)
+            messages.info(request, f'Email notification sent to {contract.company.user.email}')
+        except Exception as e:
+            print(f"Email failed: {e}")
         
         messages.success(request, 'Contract signed successfully!')
         return redirect('contract_detail', contract_id=contract.id)
