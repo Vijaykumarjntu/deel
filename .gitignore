@@ -66,3 +66,5 @@ package-lock.json
 *.tmp
 *.orig
 *.rej
+
+contracts/
