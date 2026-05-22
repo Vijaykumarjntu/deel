@@ -1,0 +1,56 @@
+{% extends 'core/base.html' %}
+{% block title %}Contracts{% endblock %}
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-6">Contracts</h1>
+    
+    {% if contracts %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2 text-left">Title</th>
+                        <th class="p-2 text-left">Party</th>
+                        <th class="p-2 text-left">Rate</th>
+                        <th class="p-2 text-left">Monthly</th>
+                        <th class="p-2 text-left">Status</th>
+                        <th class="p-2 text-left">Actions</th>
+                    <tr>
+                </thead>
+                <tbody>
+                    {% for contract in contracts %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2">{{ contract.title }}</td>
+                        <td class="p-2">
+                            {% if request.user.role == 'company' %}
+                                {{ contract.contractor.full_name }}
+                            {% else %}
+                                {{ contract.company.name }}
+                            {% endif %}
+                        </td>
+                        <td class="p-2">${{ contract.hourly_rate_usd }}/hr</td>
+                        <td class="p-2">${{ contract.monthly_amount_usd }}</td>
+                        <td class="p-2">
+                            <span class="px-2 py-1 rounded text-white text-xs {{ contract.status_badge }}">
+                                {{ contract.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="p-2">
+                            <a href="{% url 'contract_detail' contract.id %}" 
+                               class="text-blue-500 hover:underline">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-500">No contracts yet.</p>
+        {% if request.user.role == 'company' %}
+            <a href="{% url 'contractor_list' %}" class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded">
+                Create Contract
+            </a>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

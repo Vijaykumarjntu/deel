@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+{% block title %}Sign Contract{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-4">Sign Contract</h1>
+    <p class="text-gray-600 mb-6">You are about to sign: <strong>{{ contract.title }}</strong></p>
+    
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <p class="text-sm">By signing this contract, you agree to the terms and conditions outlined by {{ contract.company.name }}.</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">Your Name (as signature)</label>
+            <input type="text" name="signature_name" value="{{ request.user.contractor.full_name }}" 
+                   class="w-full px-3 py-2 border rounded-lg font-mono text-xl text-center"
+                   readonly>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">Today's Date</label>
+            <input type="text" value="{{ now|date:"F d, Y" }}" 
+                   class="w-full px-3 py-2 border rounded-lg text-center bg-gray-50"
+                   readonly>
+        </div>
+        
+        <div class="flex gap-3">
+            <button type="submit" class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
+                ✓ Confirm & Sign
+            </button>
+            <a href="{% url 'contract_detail' contract.id %}" 
+               class="flex-1 text-center bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
