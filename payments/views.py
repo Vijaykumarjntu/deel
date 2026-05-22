@@ -383,7 +383,14 @@ def create_contract(request, contractor_id):
         return redirect('dashboard')
     
     try:
-        contractor = Contractor.objects.get(id=contractor_id, company=request.user.company)
+        contractors = Contractor.objects.get(id=contractor_id, company=request.user.company)
+         # DEBUG: Print to terminal
+        # print(f"Found {contractors.count()} contractors for {request.user.email}")
+        # for c in contractors:
+        #     print(f"  - {c.full_name} (ID: {c.id})")
+        print("we are inside the create contract")
+        print(contractors)
+
     except Contractor.DoesNotExist:
         messages.error(request, 'Contractor not found')
         return redirect('contractor_list')
@@ -396,7 +403,7 @@ def create_contract(request, contractor_id):
         
         # Create contract
         contract = Contract.objects.create(
-            contractor=contractor,
+            contractor=contractors,
             company=request.user.company,
             title=title,
             hourly_rate_usd=hourly_rate,
@@ -413,7 +420,7 @@ def create_contract(request, contractor_id):
         return redirect('contract_detail', contract_id=contract.id)
     
     return render(request, 'payments/create_contract.html', {
-        'contractor': contractor,
+        'contractor': contractors,
     })
 
 
@@ -433,6 +440,8 @@ def contract_list(request):
 @login_required
 def contract_detail(request, contract_id):
     """View contract details"""
+    print("now inside the contract details")
+    print(contract_id)
     try:
         if request.user.role == 'company':
             contract = Contract.objects.get(id=contract_id, company=request.user.company)
