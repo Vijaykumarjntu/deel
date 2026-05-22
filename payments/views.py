@@ -10,6 +10,8 @@ from django.contrib.auth.decorators import login_required
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+# wsba wsxi byfo alna
+
 @login_required
 def create_stripe_connect_account(request):
     """Create Stripe Connect account for company"""
@@ -504,3 +506,20 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+    # payments/views.py
+from django.core.mail import send_mail
+from django.http import HttpResponse
+
+def test_email(request):
+    try:
+        send_mail(
+            subject='🎉 MiniDeel Email Test',
+            message='Hello! This is a test email from your MiniDeel app.\n\nIf you received this, SMTP is working!',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['jntuvijaykumar@gmail.com'],  # Send to yourself
+            fail_silently=False,
+        )
+        return HttpResponse("✅ Email sent! Check your inbox (and spam folder).")
+    except Exception as e:
+        return HttpResponse(f"❌ Error: {e}")

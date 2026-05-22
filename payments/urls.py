@@ -17,4 +17,7 @@ urlpatterns = [
     path('contract/<int:contract_id>/send/', views.send_contract, name='send_contract'),
     path('contract/<int:contract_id>/sign/', views.sign_contract, name='sign_contract'),
     path('contract/<int:contract_id>/download/', views.download_contract_pdf, name='download_contract'),
+
+    # payments/urls.py
+    path('test-email/', views.test_email, name='test_email'),
 ]
