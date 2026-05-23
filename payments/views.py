@@ -374,6 +374,109 @@ def generate_contract_pdf(contract):
     buffer.seek(0)
     return buffer.getvalue()
 
+
+# payments/emails.py
+from django.core.mail import send_mail
+from django.conf import settings
+from django.urls import reverse
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+def send_contract_sent_email(contract):
+    """Email to contractor when contract is sent for signing"""
+    subject = f"📄 New Contract: {contract.title} from {contract.company.name}"
+    
+    context = {
+        'contract': contract,
+        'company': contract.company,
+        'contractor': contract.contractor,
+        'sign_url': settings.BASE_URL + reverse('sign_contract', args=[contract.id]),
+        'view_url': settings.BASE_URL + reverse('contract_detail', args=[contract.id]),
+    }
+    
+    html_message = render_to_string('emails/contract_sent.html', context)
+    plain_message = strip_tags(html_message)
+    
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[contract.contractor.user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+
+def send_contract_signed_email(contract):
+    """Email to company when contractor signs contract"""
+    subject = f"✅ Contract Signed: {contract.title} by {contract.contractor.full_name}"
+    
+    context = {
+        'contract': contract,
+        'company': contract.company,
+        'contractor': contract.contractor,
+        'view_url': settings.BASE_URL + reverse('contract_detail', args=[contract.id]),
+    }
+    
+    html_message = render_to_string('emails/contract_signed.html', context)
+    plain_message = strip_tags(html_message)
+    
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[contract.company.user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+
+def send_payment_received_email(payout):
+    """Email to contractor when payment is received"""
+    subject = f"💰 Payment Received: ${payout.amount_usd} from {payout.company.name}"
+    
+    context = {
+        'payout': payout,
+        'company': payout.company,
+        'contractor': payout.contractor,
+        'amount': payout.amount_usd,
+        'transaction_url': settings.BASE_URL + reverse('transaction_list'),
+    }
+    
+    html_message = render_to_string('emails/payment_received.html', context)
+    plain_message = strip_tags(html_message)
+    
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[payout.contractor.user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+
+def send_payment_sent_email(payout):
+    """Email to company when payment is sent"""
+    subject = f"💸 Payment Sent: ${payout.amount_usd} to {payout.contractor.full_name}"
+    
+    context = {
+        'payout': payout,
+        'company': payout.company,
+        'contractor': payout.contractor,
+        'amount': payout.amount_usd,
+        'transaction_url': settings.BASE_URL + reverse('transaction_list'),
+    }
+    
+    html_message = render_to_string('emails/payment_sent.html', context)
+    plain_message = strip_tags(html_message)
+    
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[payout.company.user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+    
 @login_required
 def create_contract(request, contractor_id):
     """Company creates contract for contractor"""
@@ -474,6 +577,7 @@ def send_contract(request, contract_id):
      # 🔥 SEND EMAIL TO CONTRACTOR
     try:
         send_contract_sent_email(contract)
+        print("send contract sent email working")
         messages.info(request, f'Email notification sent to {contract.contractor.user.email}')
     except Exception as e:
         print(f"Email failed: {e}")

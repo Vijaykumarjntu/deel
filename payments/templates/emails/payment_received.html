@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+        .content { padding: 20px; background: #f9fafb; border-radius: 5px; margin-top: 20px; }
+        .amount { font-size: 36px; font-weight: bold; color: #10b981; text-align: center; margin: 20px 0; }
+        .button { display: inline-block; background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>💰 Payment Received</h1>
+    </div>
+    <div class="content">
+        <p>Hello <strong>{{ contractor.full_name }}</strong>,</p>
+        
+        <p>You have received a payment from <strong>{{ company.name }}</strong>:</p>
+        
+        <div class="amount">${{ amount }} USD</div>
+        
+        <p>The funds will be transferred to your registered bank account within 3-5 business days.</p>
+        
+        <div style="text-align: center;">
+            <a href="{{ transaction_url }}" class="button">📊 View Transaction History</a>
+        </div>
+    </div>
+    <div class="footer">
+        <p>MiniDeel — Global Contractor Management</p>
+    </div>
+</div>
+</body>
+</html>
