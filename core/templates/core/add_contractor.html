@@ -66,4 +66,65 @@
     
     <a href="{% url 'dashboard' %}" class="block text-center mt-4 text-gray-600">← Back to Dashboard</a>
 </div>
+
+<script>
+    const countryFields = {
+        'IN': {
+            fields: [
+                {name: 'pan', label: 'PAN Card Number', type: 'text', required: true, pattern: '[A-Z]{5}[0-9]{4}[A-Z]{1}', placeholder: 'ABCDE1234F'},
+                {name: 'aadhar', label: 'Aadhaar Number', type: 'text', required: false, pattern: '[0-9]{12}', placeholder: '123456789012'},
+                {name: 'gstin', label: 'GSTIN', type: 'text', required: false, placeholder: '22AAAAA0000A1Z'}
+            ]
+        },
+        'BR': {
+            fields: [
+                {name: 'cpf', label: 'CPF Number', type: 'text', required: true, pattern: '[0-9]{11}', placeholder: '12345678901'},
+                {name: 'rg', label: 'RG (Identity Card)', type: 'text', required: true, pattern: '[0-9]{9}', placeholder: '123456789'},
+                {name: 'pis_pasep', label: 'PIS/PASEP', type: 'text', required: false, placeholder: '12345678901'}
+            ]
+        },
+        'DE': {
+            fields: [
+                {name: 'steuer_id', label: 'Tax ID (Steuer ID)', type: 'text', required: true, pattern: '[0-9]{11}', placeholder: '12345678901'},
+                {name: 'ust_id', label: 'VAT ID (USt-IdNr.)', type: 'text', required: false, placeholder: 'DE123456789'}
+            ]
+        }
+    };
+    const countrySelect = document.getElementById('countrySelect');
+    const dynamicFields = document.getElementById('dynamicFields');
+    
+    function updateDynamicFields() {
+        const country = countrySelect.value;
+        dynamicFields.innerHTML = '';
+        
+        if (country && countryFields[country]) {
+            const fields = countryFields[country].fields;
+            fields.forEach(field => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'mb-4';
+                const label = document.createElement('label');
+                label.className = 'block text-gray-700 font-bold mb-2';
+                label.textContent = field.label + (field.required ? ' *' : ' (optional)');
+                
+                const input = document.createElement('input');
+                input.type = field.type;
+                input.name = field.name;
+                input.placeholder = field.placeholder;
+                input.className = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500';
+                if (field.required) input.required = true;
+                if (field.pattern) input.pattern = field.pattern;
+
+                const helpText = document.createElement('p');
+                helpText.className = 'text-sm text-gray-500 mt-1';
+                helpText.textContent = `Example: ${field.placeholder}`;
+                
+                fieldDiv.appendChild(label);
+                fieldDiv.appendChild(input);
+                fieldDiv.appendChild(helpText);
+                dynamicFields.appendChild(fieldDiv);
+            });
+        }
+    }
+    countrySelect.addEventListener('change', updateDynamicFields);
+</script>
 {% endblock %}
